@@ -1,4 +1,5 @@
 x-cube-common:
+  &cube-common
   image: cube-local:dev
   restart: always
   volumes:
@@ -16,6 +17,7 @@ x-cube-common:
     - CUBEJS_CUBESTORE_HOST=cubestore-serving-router
 
 x-cubestore-common:
+  &cubestore-common
   image: cubestore-local:dev
   restart: always
   volumes:
