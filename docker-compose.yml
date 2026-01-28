@@ -26,7 +26,7 @@ x-cubestore-common:
 
 services:
   cube-api: 
-    <<: *x-cube-common
+    <<: *cube-common
     container_name: cube-api
     ports:
       - 4000:4000
@@ -40,7 +40,7 @@ services:
       - cubestore-serving-3
 
   cube-refresh-worker:
-    <<: *x-cube-common
+    <<: *cube-common
     container_name: cube-refresh-worker
     environment:
       - CUBEJS_REFRESH_WORKER=true
@@ -48,7 +48,7 @@ services:
   # Building Worker - Handles background jobs
   # Jobs: WalPartitioning, PartitionCompaction, TableImport, Repartition, etc.
   cubestore-building-worker:
-    <<: *x-cubestore-common
+    <<: *cubestore-common
     container_name: cubestore-building-worker
     command: ["/cube/cubestored", "worker"]
     ports:
@@ -70,7 +70,7 @@ services:
 
   # Serving Router - Routes queries to serving workers
   cubestore-serving-router:
-    <<: *x-cubestore-common
+    <<: *cubestore-common
     container_name: cubestore-serving-router
     command: ["/cube/cubestored", "router"]
     ports:
@@ -102,7 +102,7 @@ services:
 
   # Serving Worker 1
   cubestore-serving-1:
-    <<: *x-cubestore-common
+    <<: *cubestore-common
     container_name: cubestore-serving-1
     command: ["/cube/cubestored", "worker"]
     ports:
@@ -126,7 +126,7 @@ services:
 
   # Serving Worker 2
   cubestore-serving-2:
-    <<: *x-cubestore-common
+    <<: *cubestore-common
     container_name: cubestore-serving-2
     command: ["/cube/cubestored", "worker"]
     ports:
@@ -150,7 +150,7 @@ services:
 
   # Serving Worker 3
   cubestore-serving-3:
-    <<: *x-cubestore-common
+    <<: *cubestore-common
     container_name: cubestore-serving-3
     command: ["/cube/cubestored", "worker"]
     ports:
