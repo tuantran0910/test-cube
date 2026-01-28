@@ -12,3 +12,8 @@ def repository_factory(ctx: dict) -> list[dict]:
 @config("schema_version")
 def schema_version(ctx: dict) -> str:
     return str(uuid.uuid4())[:8]
+
+
+@config("check_auth")
+def check_auth(ctx: dict, token: str) -> None:
+    return {"security_context": {"user_id": 42}}
