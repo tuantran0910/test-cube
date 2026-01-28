@@ -25,9 +25,6 @@ cubes:
       - name: status
         sql: status
         type: string
-      - name: order_date
-        sql: order_date
-        type: time
 
     # Pre-aggregation definition (rollup)
     pre_aggregations:
@@ -40,8 +37,6 @@ cubes:
         dimensions:
           - CUBE.product
           - CUBE.status
-        time_dimension: CUBE.order_date
-        granularity: day
         # The refresh (re-build trigger) can be controlled here (optional)
         refresh_key:
           every: 10 minute
