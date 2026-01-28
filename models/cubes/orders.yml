@@ -1,0 +1,47 @@
+cubes:
+  - name: Orders
+    # Tell Cube.js to use this BigQuery table
+    sql_table: rainbow-data-production-483609.sample_ds.orders
+
+    measures:
+      - name: count
+        type: count
+      - name: total_amount
+        sql: amount
+        type: sum
+
+    dimensions:
+      - name: order_id
+        sql: order_id
+        type: string
+        primary_key: true
+        public: true
+      - name: customer_id
+        sql: customer_id
+        type: string
+      - name: product
+        sql: product
+        type: string
+      - name: status
+        sql: status
+        type: string
+      - name: order_date
+        sql: order_date
+        type: time
+
+    # Pre-aggregation definition (rollup)
+    pre_aggregations:
+      - name: daily_order_stats
+        type: rollup
+        # Measures & dimensions to include
+        measures:
+          - CUBE.count
+          - CUBE.total_amount
+        dimensions:
+          - CUBE.product
+          - CUBE.status
+        time_dimension: CUBE.order_date
+        granularity: day
+        # The refresh (re-build trigger) can be controlled here (optional)
+        refresh_key:
+          every: 10 minute

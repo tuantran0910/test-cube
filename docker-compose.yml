@@ -1,0 +1,176 @@
+x-cube-common:
+  image: cube-local:dev
+  restart: always
+  volumes:
+    - ./cube.py:/cube/conf/cube.py
+    - ./models:/cube/conf/models
+  environment:
+    - CUBEJS_API_SECRET=secret
+    - CUBEJS_SQL_PASSWORD=cube
+    - CUBEJS_DB_TYPE=bigquery
+    - CUBEJS_DB_BQ_PROJECT_ID=rainbow-data-production-483609
+    - CUBEJS_DB_BQ_LOCATION=us-central1
+    - CUBEJS_DB_EXPORT_BUCKET=rainbow-data-production-iceberg-rest-cv
+    - CUBEJS_DB_EXPORT_BUCKET_TYPE=gcp
+    - CUBESTORE_GCS_BUCKET=cake-data-non-production-standard
+    - CUBEJS_CUBESTORE_HOST=cubestore-serving-router
+
+x-cubestore-common:
+  image: cubestore-local:dev
+  restart: always
+  volumes:
+    - cubestore-data:/data
+  environment:
+    - CUBESTORE_REMOTE_DIR=/data/cubestore
+    - CUBESTORE_DATA_DIR=/data/metastore/building
+
+services:
+  cube-api: 
+    <<: *x-cube-common
+    container_name: cube-api
+    ports:
+      - 4000:4000
+      - 15432:15432
+    depends_on:
+      - cube-refresh-worker
+      - cubestore-building-worker
+      - cubestore-serving-router
+      - cubestore-serving-1
+      - cubestore-serving-2
+      - cubestore-serving-3
+
+  cube-refresh-worker:
+    <<: *x-cube-common
+    container_name: cube-refresh-worker
+    environment:
+      - CUBEJS_REFRESH_WORKER=true
+
+  # Building Worker - Handles background jobs
+  # Jobs: WalPartitioning, PartitionCompaction, TableImport, Repartition, etc.
+  cubestore-building-worker:
+    <<: *x-cubestore-common
+    container_name: cubestore-building-worker
+    command: ["/cube/cubestored", "worker"]
+    ports:
+      - "3101:3030"  # Worker port
+      - "3102:3031"  # Status port
+    environment:
+      # Compute Group Configuration
+      CUBESTORE_COMPUTE_GROUP_NAME: shared-building
+      CUBESTORE_COMPUTE_GROUP_TYPE: building
+      CUBESTORE_BUILDING_WORKERS: cubestore-building-worker:3030
+      CUBESTORE_SERVER_NAME: cubestore-building-worker:3030
+
+      # Worker Configuration
+      CUBESTORE_WORKER_BIND_ADDR: 0.0.0.0:3030
+      CUBESTORE_STATUS_BIND_ADDR: 0.0.0.0:3031
+
+      # Performance Tuning
+      CUBESTORE_WORKERS: cubestore-building-worker:3030
+
+  # Serving Router - Routes queries to serving workers
+  cubestore-serving-router:
+    <<: *x-cubestore-common
+    container_name: cubestore-serving-router
+    command: ["/cube/cubestored", "router"]
+    ports:
+      - "3030:3030"  # MySQL protocol port
+      - "3031:3031"  # HTTP status port
+      - "3032:3032"  # Meta port
+      - "3033:3033"  # HTTP server port
+    environment:
+      # Compute Group Configuration
+      CUBESTORE_COMPUTE_GROUP_NAME: shared-serving
+      CUBESTORE_COMPUTE_GROUP_TYPE: serving
+      CUBESTORE_SERVING_WORKERS: cubestore-serving-1:3030,cubestore-serving-2:3030,cubestore-serving-3:3030
+      CUBESTORE_SERVER_NAME: cubestore-serving-router:3030
+
+      # Router Configuration
+      CUBESTORE_BIND_ADDR: 0.0.0.0:3030
+      CUBESTORE_STATUS_BIND_ADDR: 0.0.0.0:3031
+      CUBESTORE_META_BIND_ADDR: 0.0.0.0:3032
+      CUBESTORE_HTTP_PORT: 3033
+
+      # Performance Tuning
+      CUBESTORE_WORKERS: cubestore-serving-1:3030,cubestore-serving-2:3030,cubestore-serving-3:3030
+    volumes:
+      - cubestore-data:/data
+    depends_on:
+      - cubestore-serving-1
+      - cubestore-serving-2
+      - cubestore-serving-3
+
+  # Serving Worker 1
+  cubestore-serving-1:
+    <<: *x-cubestore-common
+    container_name: cubestore-serving-1
+    command: ["/cube/cubestored", "worker"]
+    ports:
+      - "3201:3030"
+      - "3202:3031"
+    environment:
+      # Compute Group Configuration
+      CUBESTORE_COMPUTE_GROUP_NAME: shared-serving
+      CUBESTORE_COMPUTE_GROUP_TYPE: serving
+      CUBESTORE_SERVING_WORKERS: cubestore-serving-1:3030,cubestore-serving-2:3030,cubestore-serving-3:3030
+      CUBESTORE_SERVER_NAME: cubestore-serving-1:3030
+
+      # Worker Configuration
+      CUBESTORE_WORKER_BIND_ADDR: 0.0.0.0:3030
+      CUBESTORE_STATUS_BIND_ADDR: 0.0.0.0:3031
+
+      # Performance Tuning
+      CUBESTORE_WORKERS: cubestore-serving-1:3030,cubestore-serving-2:3030,cubestore-serving-3:3030
+    volumes:
+      - cubestore-data:/data
+
+  # Serving Worker 2
+  cubestore-serving-2:
+    <<: *x-cubestore-common
+    container_name: cubestore-serving-2
+    command: ["/cube/cubestored", "worker"]
+    ports:
+      - "3203:3030"
+      - "3204:3031"
+    environment:
+      # Compute Group Configuration
+      CUBESTORE_COMPUTE_GROUP_NAME: shared-serving
+      CUBESTORE_COMPUTE_GROUP_TYPE: serving
+      CUBESTORE_SERVING_WORKERS: cubestore-serving-1:3030,cubestore-serving-2:3030,cubestore-serving-3:3030
+      CUBESTORE_SERVER_NAME: cubestore-serving-2:3030
+
+      # Worker Configuration
+      CUBESTORE_WORKER_BIND_ADDR: 0.0.0.0:3030
+      CUBESTORE_STATUS_BIND_ADDR: 0.0.0.0:3031
+
+      # Performance Tuning
+      CUBESTORE_WORKERS: cubestore-serving-1:3030,cubestore-serving-2:3030,cubestore-serving-3:3030
+    volumes:
+      - cubestore-data:/data
+
+  # Serving Worker 3
+  cubestore-serving-3:
+    <<: *x-cubestore-common
+    container_name: cubestore-serving-3
+    command: ["/cube/cubestored", "worker"]
+    ports:
+      - "3205:3030"
+      - "3206:3031"
+    environment:
+      # Compute Group Configuration
+      CUBESTORE_COMPUTE_GROUP_NAME: shared-serving
+      CUBESTORE_COMPUTE_GROUP_TYPE: serving
+      CUBESTORE_SERVING_WORKERS: cubestore-serving-1:3030,cubestore-serving-2:3030,cubestore-serving-3:3030
+      CUBESTORE_SERVER_NAME: cubestore-serving-3:3030
+
+      # Worker Configuration
+      CUBESTORE_WORKER_BIND_ADDR: 0.0.0.0:3030
+      CUBESTORE_STATUS_BIND_ADDR: 0.0.0.0:3031
+
+      # Performance Tuning
+      CUBESTORE_WORKERS: cubestore-serving-1:3030,cubestore-serving-2:3030,cubestore-serving-3:3030
+    volumes:
+      - cubestore-data:/data
+
+volumes:
+  cubestore-data:

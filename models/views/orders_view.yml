@@ -1,0 +1,10 @@
+views:
+  - name: OrdersView
+    cubes:
+      - join_path: Orders
+        includes:
+          - order_date
+          - product
+          - status
+          - count
+          - total_amount
