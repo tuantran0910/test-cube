@@ -48,6 +48,7 @@ services:
       - "3101:3030"  # Worker port
       - "3102:3031"  # Status port
     environment:
+      CUBESTORE_DATA_DIR: /data/metastore/building
       # Compute Group Configuration
       CUBESTORE_COMPUTE_GROUP_NAME: shared-building
       CUBESTORE_COMPUTE_GROUP_TYPE: building
@@ -102,6 +103,7 @@ services:
       - "3201:3030"
       - "3202:3031"
     environment:
+      CUBESTORE_DATA_DIR: /data/metastore/serving1
       # Compute Group Configuration
       CUBESTORE_COMPUTE_GROUP_NAME: shared-serving
       CUBESTORE_COMPUTE_GROUP_TYPE: serving
@@ -126,6 +128,7 @@ services:
       - "3203:3030"
       - "3204:3031"
     environment:
+      CUBESTORE_DATA_DIR: /data/metastore/serving2
       # Compute Group Configuration
       CUBESTORE_COMPUTE_GROUP_NAME: shared-serving
       CUBESTORE_COMPUTE_GROUP_TYPE: serving
@@ -150,6 +153,7 @@ services:
       - "3205:3030"
       - "3206:3031"
     environment:
+      CUBESTORE_DATA_DIR: /data/metastore/serving3
       # Compute Group Configuration
       CUBESTORE_COMPUTE_GROUP_NAME: shared-serving
       CUBESTORE_COMPUTE_GROUP_TYPE: serving
