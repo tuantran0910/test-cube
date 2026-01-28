@@ -26,17 +26,17 @@ cubes:
         sql: status
         type: string
 
-    # Pre-aggregation definition (rollup)
-    pre_aggregations:
-      - name: daily_order_stats
-        type: rollup
-        # Measures & dimensions to include
-        measures:
-          - CUBE.count
-          - CUBE.total_amount
-        dimensions:
-          - CUBE.product
-          - CUBE.status
-        # The refresh (re-build trigger) can be controlled here (optional)
-        refresh_key:
-          every: 10 minute
+    # # Pre-aggregation definition (rollup)
+    # pre_aggregations:
+    #   - name: daily_order_stats
+    #     type: rollup
+    #     # Measures & dimensions to include
+    #     measures:
+    #       - CUBE.count
+    #       - CUBE.total_amount
+    #     dimensions:
+    #       - CUBE.product
+    #       - CUBE.status
+    #     # The refresh (re-build trigger) can be controlled here (optional)
+    #     refresh_key:
+    #       every: 10 minute
